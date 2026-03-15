@@ -1,143 +1,92 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
+const express = require("express")
+const cors = require("cors")
+const fs = require("fs")
+const path = require("path")
 
-const app = express();
+const app = express()
 
-app.use(express.json());
-app.use(cors());
+app.use(cors())
+app.use(express.json())
 
-/* SERVE FRONTEND FILES */
+// DATABASE PATH
+const dbPath = path.join(__dirname, "database.json")
 
-app.use(express.static(__dirname));
+// SERVE FRONTEND FILES
+app.use(express.static(path.join(__dirname, "../frontend")))
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
 
-const DB_FILE = path.join(__dirname, "database.json");
+// LOGIN API
+app.post("/api/login", (req,res)=>{
 
-function readDB() {
-  return JSON.parse(fs.readFileSync(DB_FILE));
+const {username,password} = req.body
+
+const db = JSON.parse(fs.readFileSync(dbPath))
+
+const user = db.users.find(
+u => u.username === username && u.password === password
+)
+
+if(user){
+res.json({success:true,role:user.role})
+}else{
+res.json({success:false})
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
+})
 
-/* LOGIN */
 
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
+// GET STUDENTS
+app.get("/api/students",(req,res)=>{
 
-  const db = readDB();
+const db = JSON.parse(fs.readFileSync(dbPath))
+res.json(db.students)
 
-  const user = db.users.find(
-    (u) => u.username === username && u.password === password
-  );
+})
 
-  if (user) {
-    res.json({ success: true, role: user.role });
-  } else {
-    res.json({ success: false });
-  }
-});
 
-/* GET STUDENTS */
+// ADD STUDENT
+app.post("/api/add-student",(req,res)=>{
 
-app.get("/students", (req, res) => {
-  const db = readDB();
-  res.json(db.students);
-});
+const db = JSON.parse(fs.readFileSync(dbPath))
 
-/* UPDATE COMPLETION */
+const student = req.body
 
-app.post("/update", (req, res) => {
-  const { id, comp } = req.body;
+student.id = Date.now()
 
-  const db = readDB();
+db.students.push(student)
 
-  const student = db.students.find((s) => s.id == id);
+fs.writeFileSync(dbPath,JSON.stringify(db,null,2))
 
-  if (!student) {
-    return res.json({ success: false });
-  }
+res.json({success:true})
 
-  student.completion = comp;
+})
 
-  writeDB(db);
 
-  res.json({ success: true });
-});
+// DELETE STUDENT
+app.post("/api/delete-student",(req,res)=>{
 
-/* ACTIVATE */
+const {id} = req.body
 
-app.post("/activate", (req, res) => {
-  const { id } = req.body;
+const db = JSON.parse(fs.readFileSync(dbPath))
 
-  const db = readDB();
+db.students = db.students.filter(s => s.id != id)
 
-  const student = db.students.find((s) => s.id == id);
+fs.writeFileSync(dbPath,JSON.stringify(db,null,2))
 
-  student.status = "active";
+res.json({success:true})
 
-  writeDB(db);
+})
 
-  res.json({ success: true });
-});
 
-/* RESET ACTIVE */
+// LOAD FRONTEND
+app.get("/",(req,res)=>{
+res.sendFile(path.join(__dirname,"../frontend/index.html"))
+})
 
-app.post("/resetActive", (req, res) => {
-  const { id } = req.body;
 
-  const db = readDB();
+// START SERVER
+const PORT = process.env.PORT || 3000
 
-  const student = db.students.find((s) => s.id == id);
-
-  student.status = "inactive";
-
-  writeDB(db);
-
-  res.json({ success: true });
-});
-
-/* ADD STUDENT */
-
-app.post("/addStudent", (req, res) => {
-  const { name, prop, bg, comp } = req.body;
-
-  const db = readDB();
-
-  db.students.push({
-    id: Date.now(),
-    name,
-    proposal: prop,
-    background: bg,
-    completion: comp,
-    status: "inactive",
-  });
-
-  writeDB(db);
-
-  res.json({ success: true });
-});
-
-/* DELETE */
-
-app.post("/deleteStudent", (req, res) => {
-  const { id } = req.body;
-
-  const db = readDB();
-
-  db.students = db.students.filter((s) => s.id != id);
-
-  writeDB(db);
-
-  res.json({ success: true });
-});
-
-/* EXPORT FOR VERCEL */
-
-module.exports = app;
+app.listen(PORT,()=>{
+console.log("Server running on port",PORT)
+})
