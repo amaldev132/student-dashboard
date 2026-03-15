@@ -1,0 +1,355 @@
+/* GLOBAL */
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+background:#c7cbd6;
+min-height:100vh;
+padding:40px;
+}
+
+
+/* CONTAINER */
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+
+/* TITLE */
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+
+/* LOGIN BOX */
+
+.loginBox{
+background:#dcdcdc;
+width:320px;
+margin:auto;
+padding:30px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,.1);
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+
+/* BUTTON */
+
+.btn{
+background:#4f46e5;
+border:none;
+padding:12px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+font-size:15px;
+}
+
+.btn:hover{
+background:#4338ca;
+}
+
+
+/* INPUT */
+
+.loginBox input{
+padding:10px;
+border-radius:8px;
+border:1px solid #bbb;
+}
+
+
+/* TOP BAR */
+
+.topBar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+}
+
+.topBar button{
+background:#4f46e5;
+border:none;
+padding:10px 16px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+}
+
+.topBar button:hover{
+background:#4338ca;
+}
+
+.topBar input{
+padding:10px;
+border-radius:8px;
+border:1px solid #bbb;
+}
+
+
+/* TABLE WRAP */
+
+.tableWrap{
+background:#dcdcdc;
+border-radius:16px;
+overflow:hidden;
+box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+
+/* TABLE */
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+
+/* HEADER */
+
+thead{
+background:linear-gradient(90deg,#4f46e5,#6d63ff);
+color:white;
+}
+
+th{
+padding:18px;
+font-weight:600;
+}
+
+
+/* ROW */
+
+td{
+padding:16px;
+text-align:center;
+border-bottom:1px solid #cfcfcf;
+}
+
+
+/* ROW HOVER */
+
+tbody tr:hover{
+background:#ececec;
+}
+
+
+/* COMP COLUMN */
+
+.compColumn{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:10px;
+}
+
+.compButtons{
+display:flex;
+gap:6px;
+}
+
+.compButtons button{
+padding:4px 8px;
+border:none;
+border-radius:6px;
+background:#e5e7eb;
+cursor:pointer;
+}
+
+.compButtons button:hover{
+background:#d1d5db;
+}
+
+
+/* STATUS */
+
+.activeText{
+background:#22c55e;
+color:white;
+padding:4px 10px;
+border-radius:6px;
+font-size:12px;
+}
+
+.inactiveBadge{
+background:#e5e7eb;
+padding:4px 10px;
+border-radius:6px;
+font-size:12px;
+color:#333;
+}
+
+.activateBtn{
+background:#4f46e5;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+margin-left:6px;
+}
+
+.activateBtn:hover{
+background:#4338ca;
+}
+
+
+/* RESET ACTIVE */
+
+.resetActiveBtn{
+margin-top:6px;
+background:#ef4444;
+color:white;
+border:none;
+padding:5px 10px;
+border-radius:6px;
+cursor:pointer;
+}
+
+
+/* ACTIVE NOTE */
+
+.activeNote{
+font-size:11px;
+color:#555;
+margin-top:3px;
+}
+
+
+/* MODAL */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.45);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:1000;
+}
+
+
+/* MODAL BOX */
+
+.modalBox{
+background:white;
+padding:30px;
+border-radius:12px;
+width:320px;
+text-align:center;
+box-shadow:0 20px 40px rgba(0,0,0,.2);
+}
+
+.modalBox h3{
+margin-bottom:15px;
+}
+
+
+/* MODAL INPUT */
+
+.modalBox input{
+width:100%;
+padding:10px;
+border-radius:6px;
+border:1px solid #bbb;
+margin-bottom:20px;
+}
+
+
+/* MODAL BUTTONS */
+
+.modalButtons{
+display:flex;
+gap:10px;
+justify-content:center;
+}
+
+.modalButtons button{
+padding:8px 16px;
+border:none;
+border-radius:6px;
+background:#4f46e5;
+color:white;
+cursor:pointer;
+}
+
+.modalButtons button:hover{
+background:#4338ca;
+}
+
+
+/* ============================= */
+/* ADMIN CONTROL PANEL */
+/* ============================= */
+
+.adminPanel{
+background:#dcdcdc;
+padding:20px;
+margin-bottom:20px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+.adminPanel h3{
+margin-bottom:12px;
+}
+
+.adminControls{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+align-items:center;
+}
+
+.adminControls input{
+padding:10px;
+border-radius:6px;
+border:1px solid #bbb;
+}
+
+.adminControls button{
+background:#4f46e5;
+border:none;
+padding:10px 14px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+.adminControls button:hover{
+background:#4338ca;
+}
+
+
+/* DELETE BUTTON IN TABLE */
+
+.deleteBtn{
+background:#ef4444;
+border:none;
+color:white;
+padding:4px 8px;
+border-radius:4px;
+cursor:pointer;
+margin-left:8px;
+font-size:12px;
+}
+
+.deleteBtn:hover{
+background:#dc2626;
+}
