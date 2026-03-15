@@ -1,68 +1,159 @@
+const JSONBIN_ID  = "69b6ad84aa77b81da9e7f7f0";
+const JSONBIN_KEY = "$2a$10$BCQJfJsKGvF89LyZm9cU5.3xhRWFppe0QkbCg2pus/vIzTZKTVr0m";
+
+var role = "";
+var currentStudent = "";
+var loginType = "";
+
+var adminPassword   = "admin123";
+var teacherPassword = "teacher123";
+
+var students = [];
+var autoRefreshInterval = null;
+var isSaving = false;
+var saveQueue = false;
+
+
 /* =====================================================
-   FILL IN YOUR 2 JSONBIN VALUES BELOW BEFORE DEPLOYING
+   LOAD — GET data from JSONBin
    ===================================================== */
-
-const JSONBIN_ID  = "69b6ad84aa77b81da9e7f7f0";      // put your Bin ID here
-const JSONBIN_KEY = "$2a$10$BCQJfJsKGvF89LyZm9cU5.3xhRWFppe0QkbCg2pus/vIzTZKTVr0m";  // put your Master Key here
-
-/* ===================================================== */
-
-let role = "";
-let currentStudent = "";
-let loginType = "";
-
-const adminPassword   = "admin123";
-const teacherPassword = "teacher123";
-
-let students = [];
-let autoRefreshInterval = null;
-let isSaving = false;
-
 
 async function loadStudents(){
   try {
-    const res = await fetch("https://api.jsonbin.io/v3/b/" + JSONBIN_ID + "/latest", {
-      headers: { "X-Master-Key": JSONBIN_KEY }
-    });
-    const data = await res.json();
-    if(Array.isArray(data.record)) students = data.record;
-  } catch(e) {
-    console.error("Load failed", e);
+    var res = await fetch(
+      "https://api.jsonbin.io/v3/b/" + JSONBIN_ID + "/latest",
+      {
+        method: "GET",
+        headers: {
+          "X-Master-Key": JSONBIN_KEY,
+          "X-Bin-Meta": "false"
+        }
+      }
+    );
+
+    if(!res.ok){
+      console.error("Load HTTP error:", res.status, res.statusText);
+      return;
+    }
+
+    var data = await res.json();
+
+    if(Array.isArray(data)){
+      students = data;
+    } else if(data.record && Array.isArray(data.record)){
+      students = data.record;
+    } else {
+      console.error("Unexpected data format:", data);
+    }
+
+  } catch(e){
+    console.error("Load failed:", e);
   }
 }
+
+
+/* =====================================================
+   SAVE — PUT data to JSONBin
+   ===================================================== */
 
 async function saveStudents(){
-  if(isSaving) return;
+
+  /* if already saving, queue one more save for after */
+  if(isSaving){
+    saveQueue = true;
+    return;
+  }
+
   isSaving = true;
   showLoading(true);
+
   try {
-    await fetch("https://api.jsonbin.io/v3/b/" + JSONBIN_ID, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": JSONBIN_KEY
-      },
-      body: JSON.stringify(students)
-    });
-  } catch(e) {
-    console.error("Save failed", e);
-    alert("Could not save. Check internet connection.");
+    var body = JSON.stringify(students);
+
+    var res = await fetch(
+      "https://api.jsonbin.io/v3/b/" + JSONBIN_ID,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": JSONBIN_KEY
+        },
+        body: body
+      }
+    );
+
+    if(!res.ok){
+      var errText = await res.text();
+      console.error("Save HTTP error:", res.status, errText);
+      showStatus("Save failed: " + res.status, true);
+    } else {
+      var result = await res.json();
+      console.log("Saved successfully:", result);
+      showStatus("Saved", false);
+    }
+
+  } catch(e){
+    console.error("Save error:", e);
+    showStatus("Network error", true);
   }
+
   isSaving = false;
   showLoading(false);
+
+  /* if something was queued while saving, save again */
+  if(saveQueue){
+    saveQueue = false;
+    await saveStudents();
+  }
 }
 
+
+/* =====================================================
+   UPDATE SINGLE STUDENT — helper
+   ===================================================== */
+
+function updateStudent(index, fields){
+  if(index < 0 || index >= students.length) return;
+  var keys = Object.keys(fields);
+  for(var k = 0; k < keys.length; k++){
+    students[index][keys[k]] = fields[keys[k]];
+  }
+}
+
+
+/* =====================================================
+   STATUS INDICATOR
+   ===================================================== */
+
 function showLoading(show){
-  let el = document.getElementById("loadingMsg");
+  var el = document.getElementById("loadingMsg");
   if(!el){
     el = document.createElement("div");
     el.id = "loadingMsg";
-    el.style.cssText = "position:fixed;top:16px;right:20px;background:#7c6af7;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:monospace;z-index:9999;display:none;box-shadow:0 4px 16px rgba(124,106,247,0.4);";
+    el.style.cssText = "position:fixed;top:16px;right:20px;background:#7c6af7;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:monospace;z-index:9999;display:none;box-shadow:0 4px 16px rgba(124,106,247,0.4);transition:all 0.3s;";
     el.innerText = "Syncing...";
     document.body.appendChild(el);
   }
   el.style.display = show ? "block" : "none";
 }
+
+function showStatus(msg, isError){
+  var el = document.getElementById("loadingMsg");
+  if(!el) return;
+  el.innerText = msg;
+  el.style.background = isError ? "#ff3355" : "#00cc6a";
+  el.style.display = "block";
+  setTimeout(function(){
+    el.style.display = "none";
+    el.innerText = "Syncing...";
+    el.style.background = "#7c6af7";
+  }, 2000);
+}
+
+
+/* =====================================================
+   LOGIN
+   ===================================================== */
 
 function loginAdmin(){
   loginType = "admin";
@@ -123,6 +214,11 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 });
 
+
+/* =====================================================
+   OPEN DASHBOARD
+   ===================================================== */
+
 async function openDashboard(){
   document.getElementById("loginPage").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
@@ -143,13 +239,14 @@ async function openDashboard(){
   showLoading(false);
   renderTable();
 
+  /* auto-refresh every 5 seconds for all viewers */
   if(autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval = setInterval(async function(){
     if(!isSaving){
       await loadStudents();
       renderTable();
     }
-  }, 8000);
+  }, 5000);
 }
 
 function logout(){
@@ -157,18 +254,27 @@ function logout(){
   location.reload();
 }
 
+
+/* =====================================================
+   RENDER TABLE
+   ===================================================== */
+
 function renderTable(){
   var tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
+
+  var countEl = document.getElementById("tableCount");
+  if(countEl) countEl.textContent = students.length + " students";
 
   students.forEach(function(s, i){
     var ttl = s.prop + s.bg;
 
     var compControls = "";
     if(role === "admin" || role === "teacher" || (role === "student" && s.name === currentStudent)){
-      compControls = '<button onclick="addComp(' + i + ')">+</button>' +
-                     '<button onclick="removeComp(' + i + ')">-</button>' +
-                     '<button onclick="resetComp(' + i + ')">Reset</button>';
+      compControls =
+        '<button onclick="addComp(' + i + ')">+</button>' +
+        '<button onclick="removeComp(' + i + ')">-</button>' +
+        '<button onclick="resetComp(' + i + ')">Reset</button>';
     }
 
     var statusHTML = "";
@@ -180,14 +286,17 @@ function renderTable(){
       }
     } else {
       if(role === "admin" || role === "teacher" || (role === "student" && s.name === currentStudent)){
-        statusHTML = '<span class="inactiveBadge">Inactive</span>' +
-                     '<button class="activateBtn" onclick="activateStudent(' + i + ')">Activate</button>';
+        statusHTML =
+          '<span class="inactiveBadge">Inactive</span>' +
+          '<button class="activateBtn" onclick="activateStudent(' + i + ')">Activate</button>';
       } else {
         statusHTML = '<span class="inactiveBadge">Inactive</span>';
       }
     }
 
-    var deleteBtn = role === "admin" ? '<button class="deleteBtn" onclick="deleteStudentRow(' + i + ')">X</button>' : "";
+    var deleteBtn = role === "admin"
+      ? '<button class="deleteBtn" onclick="deleteStudentRow(' + i + ')">X</button>'
+      : "";
 
     var row = document.createElement("tr");
     row.innerHTML =
@@ -203,65 +312,93 @@ function renderTable(){
   });
 }
 
+
+/* =====================================================
+   ACTIVATE / RESET
+   ===================================================== */
+
 async function activateStudent(i){
-  if(!students[i].active){
-    students[i].active = true;
-    students[i].time   = 86400;
-    students[i].note   = true;
+  if(students[i].active) return;
+  updateStudent(i, { active: true, time: 86400, note: true });
+  await saveStudents();
+  renderTable();
+  setTimeout(async function(){
+    updateStudent(i, { note: false });
     await saveStudents();
     renderTable();
-    setTimeout(async function(){
-      students[i].note = false;
-      await saveStudents();
-      renderTable();
-    }, 3000);
-  }
+  }, 3000);
 }
 
 async function resetActive(i){
-  students[i].active = false;
-  students[i].time   = 0;
-  students[i].note   = false;
+  updateStudent(i, { active: false, time: 0, note: false });
   await saveStudents();
   renderTable();
 }
 
+
+/* =====================================================
+   COMP +/-/Reset
+   ===================================================== */
+
 async function addComp(i){
-  students[i].comp++;
+  updateStudent(i, { comp: students[i].comp + 1 });
   await saveStudents();
   renderTable();
 }
 
 async function removeComp(i){
-  if(students[i].comp > 0){
-    students[i].comp--;
-    await saveStudents();
-    renderTable();
-  }
-}
-
-async function resetComp(i){
-  students[i].comp = 0;
+  if(students[i].comp <= 0) return;
+  updateStudent(i, { comp: students[i].comp - 1 });
   await saveStudents();
   renderTable();
 }
 
+async function resetComp(i){
+  updateStudent(i, { comp: 0 });
+  await saveStudents();
+  renderTable();
+}
+
+
+/* =====================================================
+   ADD STUDENT
+   ===================================================== */
+
 async function addStudent(){
   if(role !== "admin"){ alert("Only admin can add students"); return; }
+
   var name = document.getElementById("newStudentName").value.trim().toUpperCase();
   var prop = parseInt(document.getElementById("newStudentProp").value) || 0;
   var bg   = parseInt(document.getElementById("newStudentBg").value)   || 0;
   var comp = parseInt(document.getElementById("newStudentComp").value) || 0;
+
   if(name === ""){ alert("Enter student name"); return; }
   if(students.find(function(s){ return s.name === name; })){ alert("Student already exists"); return; }
-  students.push({ id: Date.now(), name: name, prop: prop, bg: bg, comp: comp, time: 0, active: false, note: false });
+
+  students.push({
+    id: Date.now(),
+    name: name,
+    prop: prop,
+    bg: bg,
+    comp: comp,
+    time: 0,
+    active: false,
+    note: false
+  });
+
   await saveStudents();
   renderTable();
+
   document.getElementById("newStudentName").value = "";
   document.getElementById("newStudentProp").value = "";
   document.getElementById("newStudentBg").value   = "";
   document.getElementById("newStudentComp").value = "";
 }
+
+
+/* =====================================================
+   DELETE STUDENT
+   ===================================================== */
 
 async function deleteStudent(){
   if(role !== "admin"){ alert("Only admin can delete students"); return; }
@@ -284,12 +421,22 @@ async function deleteStudentRow(i){
   renderTable();
 }
 
+
+/* =====================================================
+   SEARCH
+   ===================================================== */
+
 function searchStudent(){
   var input = document.getElementById("searchBox").value.toLowerCase();
   document.querySelectorAll("#tableBody tr").forEach(function(r){
     r.style.display = r.children[1].innerText.toLowerCase().includes(input) ? "" : "none";
   });
 }
+
+
+/* =====================================================
+   EXPORT CSV
+   ===================================================== */
 
 function exportCSV(){
   var csv = "Name,PROP,BG,Total,COMP\n";
@@ -302,15 +449,25 @@ function exportCSV(){
   a.click();
 }
 
+
+/* =====================================================
+   TIMER — runs every second locally
+   saves to JSONBin every 60 seconds if active
+   ===================================================== */
+
 var timerSaveTick = 0;
 
 setInterval(function(){
   students.forEach(function(s, i){
     if(s.active){
-      if(s.time > 0){ s.time--; }
-      else {
-        s.active = false; s.time = 0; s.note = false;
-        saveStudents(); renderTable();
+      if(s.time > 0){
+        s.time--;
+      } else {
+        s.active = false;
+        s.time   = 0;
+        s.note   = false;
+        saveStudents();
+        renderTable();
       }
     }
     var h   = Math.floor(s.time / 3600);
@@ -319,9 +476,12 @@ setInterval(function(){
     var el  = document.getElementById("timer" + i);
     if(el) el.innerText = s.active ? (h + "h " + m + "m " + sec + "s") : "";
   });
+
   timerSaveTick++;
   if(timerSaveTick >= 60){
     timerSaveTick = 0;
-    if(students.some(function(s){ return s.active; })) saveStudents();
+    if(students.some(function(s){ return s.active; })){
+      saveStudents();
+    }
   }
 }, 1000);
