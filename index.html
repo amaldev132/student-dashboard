@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Progress Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div id="particles"></div>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="page-login">
+  <div class="login-glow"></div>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-icon-wrap">
+        <div class="login-icon-ring"></div>
+        <div class="login-icon-ring ring2"></div>
+        <div class="login-icon">⚡</div>
+      </div>
+      <h1 class="login-title">PROGRESS<br><span>DASHBOARD</span></h1>
+      <p class="login-sub">Track student project milestones</p>
+      <div class="login-line"></div>
+    </div>
+    <div class="login-body">
+      <div class="login-row">
+        <button class="btn-role btn-admin" onclick="loginAdmin()">
+          <span class="btn-role-glow"></span>
+          <span class="btn-icon">🔐</span>
+          <span class="btn-label">Admin</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <button class="btn-role btn-teacher" onclick="loginTeacher()">
+          <span class="btn-role-glow"></span>
+          <span class="btn-icon">🎓</span>
+          <span class="btn-label">Teacher</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+      <div class="login-divider"><span>STUDENT ACCESS</span></div>
+      <div class="student-login-row">
+        <input type="text" id="studentNameLogin" placeholder="Enter your name…" class="input-student" autocomplete="off">
+        <button class="btn-student-go" onclick="loginStudent()">
+          <span>GO</span>
+          <span class="go-arrow">⚡</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page-dashboard" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-text">PROGRESS</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active">
+        <span class="nav-dot"></span>
+        <span>Students</span>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-export" onclick="exportCSV()">
+        <span>⬇</span> Export CSV
+      </button>
+      <button class="btn-logout" onclick="logout()">
+        <span>←</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="dash-header">
+      <div class="dash-title">
+        <h2 id="dashTitle">Student Records</h2>
+        <span id="roleTag" class="role-tag"></span>
+      </div>
+      <div class="dash-right">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <div class="dash-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchBox" placeholder="Search student…" onkeyup="searchStudent()">
+        </div>
+      </div>
+    </header>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="admin-panel" style="display:none;">
+      <div class="admin-panel-title">
+        <span class="admin-pulse"></span>
+        ⚙ Admin Controls
+      </div>
+      <div class="admin-grid">
+        <div class="admin-group">
+          <label>Add Student</label>
+          <div class="admin-row">
+            <input type="text"   id="newStudentName" placeholder="Name">
+            <input type="number" id="newStudentProp" placeholder="PROP">
+            <input type="number" id="newStudentBg"   placeholder="BG">
+            <input type="number" id="newStudentComp" placeholder="COMP">
+            <button class="btn-add" onclick="addStudent()">+ Add</button>
+          </div>
+        </div>
+        <div class="admin-group">
+          <label>Delete by SL</label>
+          <div class="admin-row">
+            <input type="number" id="deleteStudentIndex" placeholder="SL No.">
+            <button class="btn-delete-sl" onclick="deleteStudent()">🗑 Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-header-bar">
+        <span class="table-title-label">STUDENT RECORDS</span>
+        <span class="table-count" id="tableCount">— students</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SL</th><th>NAME</th><th>PROP</th><th>BG</th>
+              <th>TTL</th><th>COMP</th><th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div id="passwordModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-glow"></div>
+    <div class="modal-icon">🔑</div>
+    <h3 id="modalTitle">Enter Password</h3>
+    <input type="password" id="passwordInput" placeholder="Password…" class="modal-input">
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-login" onclick="submitPassword()">Login ⚡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIG — paste your Apps Script Web App URL here after deploying
+// ============================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbxvg29FlugKVefeUoswKj2DVNNGaFovmHKz86yDYaJkoIcYdd-xtWeuL5LMkImy6Kzh/exec";
+
+const adminPassword   = "admin123";
+const teacherPassword = "teacher123";
+
+let role          = "";
+let currentStudent = "";
+let loginType     = "";
+let students      = [];
+
+// ── API CALLS ────────────────────────────────────────────────
+async function apiGet() {
+  try {
+    const res  = await fetch(API_URL + "?action=get");
+    const json = await res.json();
+    if (json.success) students = json.data;
+    else showStatus("Load failed", true);
+  } catch(e) { showStatus("Network error", true); }
+}
+
+async function apiPost(body) {
+  try {
+    const res  = await fetch(API_URL, {
+      method: "POST",
+      body:   JSON.stringify(body)
+    });
+    const json = await res.json();
+    if (!json.success) showStatus("Error: " + json.error, true);
+    return json;
+  } catch(e) { showStatus("Network error", true); return { success: false }; }
+}
+
+// ── STATUS BADGE ─────────────────────────────────────────────
+function showStatus(msg, isError) {
+  let el = document.getElementById("loadingMsg");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "loadingMsg";
+    el.style.cssText = "position:fixed;top:16px;right:20px;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:monospace;z-index:9999;display:none;box-shadow:0 4px 16px rgba(124,106,247,0.4);";
+    document.body.appendChild(el);
+  }
+  el.innerText = msg;
+  el.style.background = isError ? "#ff3355" : "#00cc6a";
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 2500);
+}
+
+function showLoading(show) {
+  let el = document.getElementById("loadingMsg");
+  if (!el) return;
+  if (show) {
+    el.innerText = "Syncing...";
+    el.style.background = "#7c6af7";
+    el.style.display = "block";
+  } else {
+    el.style.display = "none";
+  }
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+function loginAdmin() {
+  loginType = "admin";
+  document.getElementById("modalTitle").innerText = "Enter Admin Password";
+  document.getElementById("passwordModal").style.display = "flex";
+  document.getElementById("passwordInput").focus();
+}
+function loginTeacher() {
+  loginType = "teacher";
+  document.getElementById("modalTitle").innerText = "Enter Teacher Password";
+  document.getElementById("passwordModal").style.display = "flex";
+  document.getElementById("passwordInput").focus();
+}
+function submitPassword() {
+  const pass = document.getElementById("passwordInput").value.trim();
+  if (loginType === "admin" && pass === adminPassword)         { role = "admin";   closeModal(); openDashboard(); }
+  else if (loginType === "teacher" && pass === teacherPassword) { role = "teacher"; closeModal(); openDashboard(); }
+  else alert("Wrong password");
+}
+function closeModal() {
+  document.getElementById("passwordModal").style.display = "none";
+  document.getElementById("passwordInput").value = "";
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.getElementById("passwordModal").style.display === "flex")
+    submitPassword();
+});
+
+async function loginStudent() {
+  let name = document.getElementById("studentNameLogin").value.trim();
+  if (!name) { alert("Enter student name"); return; }
+  name = name.toUpperCase();
+  showLoading(true);
+  await apiGet();
+  showLoading(false);
+  const found = students.find(s => s.name === name);
+  if (!found) { alert("Student not found"); return; }
+  currentStudent = name;
+  role = "student";
+  openDashboard();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const inp = document.getElementById("studentNameLogin");
+  if (inp) inp.addEventListener("keypress", e => { if (e.key === "Enter") loginStudent(); });
+});
+
+// ── OPEN DASHBOARD ───────────────────────────────────────────
+async function openDashboard() {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  const tag = document.getElementById("roleTag");
+  if (tag) tag.textContent = role.toUpperCase();
+  const title = document.getElementById("dashTitle");
+  if (title && role === "student") title.textContent = "Welcome, " + currentStudent;
+  if (role === "admin") {
+    const panel = document.getElementById("adminPanel");
+    if (panel) panel.style.display = "block";
+  }
+  showLoading(true);
+  await apiGet();
+  showLoading(false);
+  renderTable();
+  // Auto refresh every 5 seconds
+  setInterval(async () => {
+    await apiGet();
+    renderTable();
+  }, 5000);
+}
+
+function logout() { location.reload(); }
+
+// ── RENDER TABLE ─────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+  const countEl = document.getElementById("tableCount");
+  if (countEl) countEl.textContent = students.length + " students";
+
+  students.forEach((s, i) => {
+    const ttl = (Number(s.prop)||0) + (Number(s.bg)||0);
+    const isActive = s.active === true || s.active === "TRUE" || s.active === "true";
+
+    let compControls = "";
+    if (role === "admin" || role === "teacher" || (role === "student" && s.name === currentStudent)) {
+      compControls =
+        `<button onclick="addComp(${i})">+</button>` +
+        `<button onclick="removeComp(${i})">-</button>` +
+        `<button onclick="resetComp(${i})">Reset</button>`;
+    }
+
+    let statusHTML = "";
+    if (isActive) {
+      statusHTML = `<div><span class="activeText">Active</span></div>`;
+      if (role === "admin" || role === "teacher")
+        statusHTML += `<button class="resetActiveBtn" onclick="resetActive(${i})">Reset Active</button>`;
+    } else {
+      if (role === "admin" || role === "teacher" || (role === "student" && s.name === currentStudent))
+        statusHTML = `<span class="inactiveBadge">Inactive</span><button class="activateBtn" onclick="activateStudent(${i})">Activate</button>`;
+      else
+        statusHTML = `<span class="inactiveBadge">Inactive</span>`;
+    }
+
+    const deleteBtn = role === "admin"
+      ? `<button class="deleteBtn" onclick="deleteStudentRow(${i})">X</button>` : "";
+
+    const row = document.createElement("tr");
+    row.innerHTML =
+      `<td>${i+1}</td>` +
+      `<td>${s.name} ${deleteBtn}</td>` +
+      `<td>${s.prop||0}</td>` +
+      `<td>${s.bg||0}</td>` +
+      `<td>${ttl}</td>` +
+      `<td class="compColumn"><span class="compValue">${s.comp||0}</span><div class="compButtons">${compControls}</div></td>` +
+      `<td><span id="timer_${i}"></span>${statusHTML}</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+// ── ACTIVATE ─────────────────────────────────────────────────
+async function activateStudent(i) {
+  const s = students[i];
+  if (!s) return;
+  showLoading(true);
+  await apiPost({ action: "update", data: { id: s.id, active: true, time: 86400, note: true } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+  showStatus("Activated ✓", false);
+  setTimeout(async () => {
+    await apiPost({ action: "update", data: { id: s.id, note: false } });
+  }, 3000);
+}
+
+async function resetActive(i) {
+  const s = students[i];
+  if (!s) return;
+  showLoading(true);
+  await apiPost({ action: "update", data: { id: s.id, active: false, time: 0, note: false } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+  showStatus("Reset ✓", false);
+}
+
+// ── COMP ─────────────────────────────────────────────────────
+async function addComp(i) {
+  const s = students[i];
+  if (!s) return;
+  showLoading(true);
+  await apiPost({ action: "update", data: { id: s.id, comp: (Number(s.comp)||0) + 1 } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+}
+
+async function removeComp(i) {
+  const s = students[i];
+  if (!s || (Number(s.comp)||0) <= 0) return;
+  showLoading(true);
+  await apiPost({ action: "update", data: { id: s.id, comp: (Number(s.comp)||0) - 1 } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+}
+
+async function resetComp(i) {
+  const s = students[i];
+  if (!s) return;
+  showLoading(true);
+  await apiPost({ action: "update", data: { id: s.id, comp: 0 } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+}
+
+// ── ADD STUDENT ──────────────────────────────────────────────
+async function addStudent() {
+  if (role !== "admin") { alert("Only admin can add students"); return; }
+  const name = document.getElementById("newStudentName").value.trim().toUpperCase();
+  const prop = parseInt(document.getElementById("newStudentProp").value) || 0;
+  const bg   = parseInt(document.getElementById("newStudentBg").value)   || 0;
+  const comp = parseInt(document.getElementById("newStudentComp").value) || 0;
+  if (!name) { alert("Enter student name"); return; }
+  if (students.find(s => s.name === name)) { alert("Student already exists"); return; }
+  showLoading(true);
+  await apiPost({ action: "add", data: { name, prop, bg, comp } });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+  showStatus("Student added ✓", false);
+  document.getElementById("newStudentName").value = "";
+  document.getElementById("newStudentProp").value = "";
+  document.getElementById("newStudentBg").value   = "";
+  document.getElementById("newStudentComp").value = "";
+}
+
+// ── DELETE STUDENT ───────────────────────────────────────────
+async function deleteStudent() {
+  if (role !== "admin") { alert("Only admin can delete"); return; }
+  const indexInput = document.getElementById("deleteStudentIndex").value;
+  if (!indexInput) { alert("Enter SL number"); return; }
+  const idx = parseInt(indexInput) - 1;
+  if (idx < 0 || idx >= students.length) { alert("Invalid SL number"); return; }
+  const s = students[idx];
+  if (!confirm("Delete " + s.name + "?")) return;
+  showLoading(true);
+  await apiPost({ action: "delete", id: s.id });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+  showStatus("Deleted ✓", false);
+  document.getElementById("deleteStudentIndex").value = "";
+}
+
+async function deleteStudentRow(i) {
+  if (role !== "admin") return;
+  const s = students[i];
+  if (!s || !confirm("Delete " + s.name + "?")) return;
+  showLoading(true);
+  await apiPost({ action: "delete", id: s.id });
+  await apiGet();
+  renderTable();
+  showLoading(false);
+  showStatus("Deleted ✓", false);
+}
+
+// ── SEARCH ───────────────────────────────────────────────────
+function searchStudent() {
+  const input = document.getElementById("searchBox").value.toLowerCase();
+  document.querySelectorAll("#tableBody tr").forEach(r => {
+    r.style.display = r.children[1].innerText.toLowerCase().includes(input) ? "" : "none";
+  });
+}
+
+// ── EXPORT CSV ───────────────────────────────────────────────
+function exportCSV() {
+  let csv = "Name,PROP,BG,Total,COMP\n";
+  students.forEach(s => {
+    csv += `${s.name},${s.prop||0},${s.bg||0},${(Number(s.prop)||0)+(Number(s.bg)||0)},${s.comp||0}\n`;
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv]));
+  a.download = "students.csv";
+  a.click();
+}
+
+// ── COUNTDOWN TIMER ──────────────────────────────────────────
+let timerSaveTick = 0;
+setInterval(() => {
+  students.forEach((s, i) => {
+    const isActive = s.active === true || s.active === "TRUE" || s.active === "true";
+    if (isActive) {
+      if (Number(s.time) > 0) { s.time = Number(s.time) - 1; }
+      else {
+        s.active = false; s.time = 0;
+        apiPost({ action: "update", data: { id: s.id, active: false, time: 0, note: false } });
+      }
+    }
+    const el = document.getElementById("timer_" + i);
+    if (el) {
+      if (isActive && Number(s.time) > 0) {
+        const h = Math.floor(s.time/3600);
+        const m = Math.floor((s.time%3600)/60);
+        const sec = s.time%60;
+        el.innerText = `${h}h ${m}m ${sec}s`;
+      } else { el.innerText = ""; }
+    }
+  });
+  timerSaveTick++;
+  if (timerSaveTick >= 60) {
+    timerSaveTick = 0;
+    students.forEach(s => {
+      const isActive = s.active === true || s.active === "TRUE" || s.active === "true";
+      if (isActive) apiPost({ action: "update", data: { id: s.id, time: s.time } });
+    });
+  }
+}, 1000);
+</script>
+
+<!-- BACKGROUND + PARTICLES -->
+<script>
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+const lines = [];
+for(let i=0;i<8;i++) lines.push({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, angle:Math.random()*Math.PI*2, speed:0.2+Math.random()*0.3, length:100+Math.random()*200, opacity:0.03+Math.random()*0.05, color:Math.random()>0.5?'100,200,255':'150,100,255' });
+function drawBg(){ ctx.clearRect(0,0,canvas.width,canvas.height); lines.forEach(l=>{ l.x+=Math.cos(l.angle)*l.speed; l.y+=Math.sin(l.angle)*l.speed; if(l.x<-200)l.x=canvas.width+200; if(l.x>canvas.width+200)l.x=-200; if(l.y<-200)l.y=canvas.height+200; if(l.y>canvas.height+200)l.y=-200; ctx.beginPath(); ctx.moveTo(l.x,l.y); ctx.lineTo(l.x+Math.cos(l.angle)*l.length,l.y+Math.sin(l.angle)*l.length); ctx.strokeStyle='rgba('+l.color+','+l.opacity+')'; ctx.lineWidth=1; ctx.stroke(); }); requestAnimationFrame(drawBg); } drawBg();
+const pc=document.getElementById('particles'); for(let i=0;i<30;i++){ const p=document.createElement('div'); p.className='particle'; p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;animation-delay:${Math.random()*8}s;animation-duration:${6+Math.random()*6}s;opacity:${0.1+Math.random()*0.3};`; pc.appendChild(p); }
+</script>
+
+</body>
+</html>
