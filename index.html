@@ -110,9 +110,9 @@
         <div class="admin-group">
           <label>Add Student</label>
           <div class="admin-row">
-            <input type="text" id="newStudentName" placeholder="Name">
+            <input type="text"   id="newStudentName" placeholder="Name">
             <input type="number" id="newStudentProp" placeholder="PROP">
-            <input type="number" id="newStudentBg" placeholder="BG">
+            <input type="number" id="newStudentBg"   placeholder="BG">
             <input type="number" id="newStudentComp" placeholder="COMP">
             <button class="btn-add" onclick="addStudent()">+ Add</button>
           </div>
@@ -163,34 +163,35 @@
     <input type="password" id="passwordInput" placeholder="Password…" class="modal-input">
     <div class="modal-actions">
       <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-btn-login" onclick="submitPassword()">Login ⚡</button>
+      <button class="modal-btn-login"  onclick="submitPassword()">Login ⚡</button>
     </div>
   </div>
 </div>
 
-<script src="/script.js"></script>
+<!-- Firebase App (loaded as ES module via script.js) -->
+<script type="module" src="/script.js"></script>
 
 <script>
-// Background canvas animation
+// ─── Background canvas animation ───────────────────────────
 const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
+const ctx    = canvas.getContext('2d');
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.height= window.innerHeight;
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.height= window.innerHeight;
 });
 
 const lines = [];
 for(let i = 0; i < 8; i++){
   lines.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    angle: Math.random() * Math.PI * 2,
-    speed: 0.2 + Math.random() * 0.3,
-    length: 100 + Math.random() * 200,
+    x:       Math.random() * canvas.width,
+    y:       Math.random() * canvas.height,
+    angle:   Math.random() * Math.PI * 2,
+    speed:   0.2 + Math.random() * 0.3,
+    length:  100 + Math.random() * 200,
     opacity: 0.03 + Math.random() * 0.05,
-    color: Math.random() > 0.5 ? '100,200,255' : '150,100,255'
+    color:   Math.random() > 0.5 ? '100,200,255' : '150,100,255'
   });
 }
 
@@ -199,22 +200,23 @@ function drawBg(){
   lines.forEach(l => {
     l.x += Math.cos(l.angle) * l.speed;
     l.y += Math.sin(l.angle) * l.speed;
-    if(l.x < -200) l.x = canvas.width + 200;
-    if(l.x > canvas.width + 200) l.x = -200;
-    if(l.y < -200) l.y = canvas.height + 200;
+    if(l.x < -200)               l.x = canvas.width  + 200;
+    if(l.x > canvas.width  + 200) l.x = -200;
+    if(l.y < -200)               l.y = canvas.height + 200;
     if(l.y > canvas.height + 200) l.y = -200;
     ctx.beginPath();
     ctx.moveTo(l.x, l.y);
-    ctx.lineTo(l.x + Math.cos(l.angle) * l.length, l.y + Math.sin(l.angle) * l.length);
+    ctx.lineTo(l.x + Math.cos(l.angle) * l.length,
+               l.y + Math.sin(l.angle) * l.length);
     ctx.strokeStyle = 'rgba(' + l.color + ',' + l.opacity + ')';
-    ctx.lineWidth = 1;
+    ctx.lineWidth   = 1;
     ctx.stroke();
   });
   requestAnimationFrame(drawBg);
 }
 drawBg();
 
-// Floating particles
+// ─── Floating particles ─────────────────────────────────────
 const particleContainer = document.getElementById('particles');
 for(let i = 0; i < 30; i++){
   const p = document.createElement('div');
