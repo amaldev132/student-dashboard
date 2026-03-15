@@ -14,7 +14,9 @@ const defaultStudents=[
 {name:"ZIYAD",prop:47,bg:1,comp:0,time:0,active:false,note:false},
 {name:"SETHU L K",prop:13,bg:1,comp:0,time:0,active:false,note:false},
 {name:"SARANG",prop:4,bg:1,comp:0,time:0,active:false,note:false},
-{name:"MHD AMAL",prop:17,bg:1,comp:0,time:0,active:false,note:false}
+{name:"MHD AMAL",prop:17,bg:1,comp:0,time:0,active:false,note:false},
+{name:"ARUN",prop:0,bg:0,comp:0,time:0,active:false,note:false},
+{name:"KIRAN",prop:0,bg:0,comp:0,time:0,active:false,note:false}
 
 ];
 
