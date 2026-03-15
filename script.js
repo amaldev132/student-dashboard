@@ -2,7 +2,7 @@
    FILL IN YOUR 2 JSONBIN VALUES BELOW BEFORE DEPLOYING
    ===================================================== */
 
-const JSONBIN_ID  = "69b6a663c3097a1dd528c13c";      // put your Bin ID here
+const JSONBIN_ID  = "69b6ad84aa77b81da9e7f7f0";      // put your Bin ID here
 const JSONBIN_KEY = "$2a$10$BCQJfJsKGvF89LyZm9cU5.3xhRWFppe0QkbCg2pus/vIzTZKTVr0m";  // put your Master Key here
 
 /* ===================================================== */
@@ -158,7 +158,7 @@ function logout(){
 }
 
 function renderTable(){
-  var tbody = document.getElementById("tableBody"); var countEl = document.getElementById("tableCount"); if(countEl) countEl.textContent = students.length + " students";
+  var tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
   students.forEach(function(s, i){
